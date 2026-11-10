@@ -23,7 +23,7 @@ const player=new THREE.Group();scene.add(player);player.position.set(0,0,17);con
 // Detalles de uniforme: mangas, brazos y botines\nfor(const x of [-.62,.62]){const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.13,.58,4,8),blue);arm.position.set(x,1.38,0);arm.rotation.z=x<0?-.18:.18;player.add(arm)}for(const l of legs){const boot=new THREE.Mesh(new THREE.BoxGeometry(.28,.16,.48),mat(0xf3f4f5));boot.position.set(l.position.x,.12,-.12);player.add(boot)}\nconst ball=new THREE.Group();scene.add(ball);const sphere=new THREE.Mesh(new THREE.SphereGeometry(.48,24,18),white);sphere.castShadow=true;ball.add(sphere);ball.add(new THREE.Mesh(new THREE.IcosahedronGeometry(.29,0),new THREE.MeshBasicMaterial({color:0x18202a,wireframe:true})));ball.position.set(0,.48,14.5);
 const keeper=new THREE.Group();scene.add(keeper);keeper.position.set(0,0,-38.2);const kt=new THREE.Mesh(new THREE.CapsuleGeometry(.52,.75,5,10),mat(0xe8a322));kt.position.y=1.25;keeper.add(kt);const kh=new THREE.Mesh(new THREE.SphereGeometry(.34,18,14),skin);kh.position.y=2.2;keeper.add(kh);for(const x of [-.8,.8]){const g=new THREE.Mesh(new THREE.SphereGeometry(.24),white);g.position.set(x,1.4,0);keeper.add(g)}
 const keys={};addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if([' ','arrowup','arrowdown','arrowleft','arrowright'].includes(e.key.toLowerCase()))e.preventDefault();if(e.key.toLowerCase()==='r')resetBall()});addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
-let score=0,started=false,cooldown=0;const scoreEl=document.querySelector('#score'),message=document.querySelector('#message'),velocity=new THREE.Vector3();
+let score=0,started=false,cooldown=0,keeperDive=0,saveCooldown=0;const scoreEl=document.querySelector('#score'),message=document.querySelector('#message'),velocity=new THREE.Vector3();
 function updateScore(){scoreEl.textContent='LOCAL '+score+' — 0 VISITA'}function resetBall(){ball.position.set(player.position.x,.48,player.position.z-2.3);velocity.set(0,0,0)}
 document.querySelector('#start').onclick=()=>{started=true;message.textContent='¡JUEGA!';document.querySelector('#start').style.display='none';setTimeout(()=>message.textContent='',1200)};
 const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.035);
@@ -35,7 +35,29 @@ if(keys[' ']&&cooldown===0&&near<2.6){velocity.set(Math.sin(player.rotation.y)*2
 ball.position.addScaledVector(velocity,dt);velocity.multiplyScalar(Math.pow(.985,dt*60));velocity.y-=9.8*dt;if(ball.position.y<.48){ball.position.y=.48;if(velocity.y<0)velocity.y*=-.42}
 if(Math.abs(ball.position.x)>26){ball.position.x=Math.sign(ball.position.x)*26;velocity.x*=-.55}
 if(ball.position.z>40||ball.position.z< -41.5){if(ball.position.z< -40.5&&Math.abs(ball.position.x)<6.7&&ball.position.y<3.1){score++;updateScore();message.textContent='¡GOOOOOOL! ⚽';resetBall();setTimeout(()=>message.textContent='',1500)}else{ball.position.z=THREE.MathUtils.clamp(ball.position.z,-40,40);velocity.z*=-.55}}
-keeper.position.x=THREE.MathUtils.clamp(ball.position.x*.45,-5.5,5.5);const desired=new THREE.Vector3(player.position.x-Math.sin(player.rotation.y)*9,6.1,player.position.z+Math.cos(player.rotation.y)*9);camera.position.lerp(desired,1-Math.exp(-dt*4.5));camera.lookAt(player.position.x,1.35,player.position.z-2.2)}
+// IA del arquero: se coloca en la trayectoria del balón y vuelve al centro
+saveCooldown=Math.max(0,saveCooldown-dt);keeperDive=Math.max(0,keeperDive-dt);
+let targetKeeperX=0;
+if(ball.position.z< -13&&velocity.z<-.5){
+ const timeToKeeper=Math.max(0,(keeper.position.z-ball.position.z)/velocity.z);
+ targetKeeperX=ball.position.x+velocity.x*timeToKeeper;
+}
+targetKeeperX=THREE.MathUtils.clamp(targetKeeperX,-6,6);
+const keeperStep=THREE.MathUtils.clamp(targetKeeperX-keeper.position.x,-10*dt,10*dt);
+keeper.position.x+=keeperStep;
+keeper.rotation.z=keeperDive>0?Math.sign(ball.position.x-keeper.position.x)*-.48:0;
+// Atajada: el balón rebota al campo cuando alcanza el cuerpo o los brazos
+const keeperDX=ball.position.x-keeper.position.x;
+if(Math.abs(ball.position.z-keeper.position.z)<.92&&Math.abs(keeperDX)<1.28&&ball.position.y<2.85&&ball.position.y>.25&&saveCooldown===0){
+ velocity.z=Math.max(8,Math.abs(velocity.z)*.82);
+ velocity.x=keeperDX*.9+(Math.random()-.5)*2.5;
+ velocity.y=3.8;
+ ball.position.z=keeper.position.z+.98;
+ keeperDive=.42;saveCooldown=.7;
+ message.textContent='¡ATAJADÓN DEL ARQUERO!';
+ setTimeout(()=>{if(message.textContent==='¡ATAJADÓN DEL ARQUERO!')message.textContent=''},1100);
+}
+const desired=new THREE.Vector3(player.position.x-Math.sin(player.rotation.y)*9,6.1,player.position.z+Math.cos(player.rotation.y)*9);camera.position.lerp(desired,1-Math.exp(-dt*4.5));camera.lookAt(player.position.x,1.35,player.position.z-2.2)}
 ball.rotation.x+=velocity.z*dt;ball.rotation.z-=velocity.x*dt;renderer.render(scene,camera)}
 animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2))});
 </script></body></html>
