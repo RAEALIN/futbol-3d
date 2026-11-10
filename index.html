@@ -28,14 +28,14 @@ function updateScore(){scoreEl.textContent='LOCAL '+score+' — 0 VISITA'}functi
 document.querySelector('#start').onclick=()=>{started=true;message.textContent='¡JUEGA!';document.querySelector('#start').style.display='none';setTimeout(()=>message.textContent='',1200)};
 const clock=new THREE.Clock();function animate(){requestAnimationFrame(animate);const dt=Math.min(clock.getDelta(),.035);
 if(started){cooldown=Math.max(0,cooldown-dt);const forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0),side=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);const input=new THREE.Vector3(side,0,-forward);
-if(input.lengthSq()>0){input.normalize();player.position.addScaledVector(input,(keys.shift?13:8)*dt);player.rotation.y=Math.atan2(input.x,input.z);legs[0].rotation.x=Math.sin(performance.now()*.015)*.5;legs[1].rotation.x=-legs[0].rotation.x}
+if(input.lengthSq()>0){input.normalize();player.position.addScaledVector(input,(keys.shift?13:8)*dt);player.rotation.y=Math.atan2(input.x,-input.z);legs[0].rotation.x=Math.sin(performance.now()*.015)*.5;legs[1].rotation.x=-legs[0].rotation.x}
 player.position.x=THREE.MathUtils.clamp(player.position.x,-25,25);player.position.z=THREE.MathUtils.clamp(player.position.z,-39,38);
 const near=ball.position.distanceTo(new THREE.Vector3(player.position.x,.48,player.position.z-1.1));if(near<2.2&&velocity.length()<2.5)ball.position.lerp(new THREE.Vector3(player.position.x,.48,player.position.z-1.2),Math.min(1,dt*5));
 if(keys[' ']&&cooldown===0&&near<2.6){velocity.set(Math.sin(player.rotation.y)*23,.13,-Math.cos(player.rotation.y)*23);cooldown=.55}
 ball.position.addScaledVector(velocity,dt);velocity.multiplyScalar(Math.pow(.985,dt*60));velocity.y-=9.8*dt;if(ball.position.y<.48){ball.position.y=.48;if(velocity.y<0)velocity.y*=-.42}
 if(Math.abs(ball.position.x)>26){ball.position.x=Math.sign(ball.position.x)*26;velocity.x*=-.55}
 if(ball.position.z>40||ball.position.z< -41.5){if(ball.position.z< -40.5&&Math.abs(ball.position.x)<6.7&&ball.position.y<3.1){score++;updateScore();message.textContent='¡GOOOOOOL! ⚽';resetBall();setTimeout(()=>message.textContent='',1500)}else{ball.position.z=THREE.MathUtils.clamp(ball.position.z,-40,40);velocity.z*=-.55}}
-keeper.position.x=THREE.MathUtils.clamp(ball.position.x*.45,-5.5,5.5);const desired=new THREE.Vector3(player.position.x+Math.sin(player.rotation.y)*5,4,player.position.z+Math.cos(player.rotation.y)*8);camera.position.lerp(desired,1-Math.exp(-dt*3.5));camera.lookAt(player.position.x,1.1,player.position.z-5)}
+keeper.position.x=THREE.MathUtils.clamp(ball.position.x*.45,-5.5,5.5);const desired=new THREE.Vector3(player.position.x-Math.sin(player.rotation.y)*8,5.2,player.position.z+Math.cos(player.rotation.y)*8);camera.position.lerp(desired,1-Math.exp(-dt*5));camera.lookAt(player.position.x,1.25,player.position.z-0.5)}
 ball.rotation.x+=velocity.z*dt;ball.rotation.z-=velocity.x*dt;renderer.render(scene,camera)}
 animate();addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2))});
 </script></body></html>
