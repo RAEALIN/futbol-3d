@@ -63,7 +63,8 @@ if(Math.abs(ball.position.z-keeper.position.z)<.92&&Math.abs(keeperDX)<1.28&&bal
  message.textContent='¡ATAJADÓN DEL ARQUERO!';
  setTimeout(()=>{if(message.textContent==='¡ATAJADÓN DEL ARQUERO!')message.textContent=''},1100);
 }
-// Cámara FIFA TV fija: plano elevado desde la tribuna, centrado y sin perseguir al jugador. El encuadre amplio mantiene las dos áreas y las líneas laterales visibles.}
+// Cámara FIFA TV fija: plano elevado desde la tribuna, centrado y sin perseguir al jugador. El encuadre amplio mantiene las dos áreas y las líneas laterales visibles.
+}
 ball.rotation.x+=velocity.z*dt;ball.rotation.z-=velocity.x*dt;renderer.render(scene,camera)}
 animate();addEventListener('resize',()=>{updateCameraFraming();renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2))});
 </script></body></html>
